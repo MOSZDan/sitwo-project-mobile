@@ -40,6 +40,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "${defaultDate.year}-${defaultDate.month.toString().padLeft(2, '0')}-${defaultDate.day.toString().padLeft(2, '0')}";
   }
 
+  // Validar página 1 antes de avanzar
+  bool _validatePage1() {
+    // Validar email
+    final email = _emailController.text.trim();
+    if (email.isEmpty) return false;
+    if (!RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email))
+      return false;
+
+    // Validar contraseña
+    if (_passwordController.text.length < 8) return false;
+
+    // Validar nombre
+    if (_nombreController.text.trim().isEmpty) return false;
+
+    // Validar apellido
+    if (_apellidoController.text.trim().isEmpty) return false;
+
+    return true;
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -212,6 +234,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _nextPage() {
+    // Validar página 1 antes de avanzar
+    if (_currentPage == 0) {
+      if (!_validatePage1()) {
+        _showMessage(
+          'Por favor completa todos los campos correctamente',
+          false,
+        );
+        return;
+      }
+    }
+
     if (_currentPage < 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -294,6 +327,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               key: _formKey,
               child: PageView(
                 controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [_buildPage1(), _buildPage2()],
               ),
@@ -483,10 +517,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.emailAddress,
             prefixIcon: Icons.email_outlined,
             validator: (value) {
-              if (value == null || value.isEmpty) {
+              if (value == null || value.trim().isEmpty) {
                 return 'El correo es requerido';
               }
-              if (!value.contains('@')) {
+              if (!RegExp(
+                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+              ).hasMatch(value.trim())) {
                 return 'Ingresa un correo válido';
               }
               return null;
@@ -530,7 +566,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: 'Nombre',
                   controller: _nombreController,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'El nombre es requerido';
                     }
                     return null;
@@ -543,7 +579,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: 'Apellido',
                   controller: _apellidoController,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'El apellido es requerido';
                     }
                     return null;
@@ -614,7 +650,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             prefixIcon: Icons.location_on_outlined,
             maxLines: 2,
             validator: (value) {
-              if (value == null || value.isEmpty) {
+              if (value == null || value.trim().isEmpty) {
                 return 'La dirección es requerida';
               }
               return null;
@@ -643,7 +679,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return 'El CI es requerido';
                     }
                     if (value.length != 8) {
-                      return 'Debe tener 8 dígitos';
+                      return 'Debe tener exactamente 8 dígitos';
                     }
                     return null;
                   },
@@ -765,6 +801,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               DropdownMenuItem(value: 'F', child: Text('Femenino')),
             ],
             onChanged: (value) => setState(() => _sexo = value ?? ''),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'El sexo es requerido';
+              }
+              return null;
+            },
           ),
         ),
       ],
@@ -807,6 +849,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: Color(0xFF06B6D4), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
