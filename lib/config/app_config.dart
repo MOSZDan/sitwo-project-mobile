@@ -2,13 +2,15 @@ class AppConfig {
   // URL del backend
   static const String baseUrl =
       'https://sitwo-project-backend-vzq2.onrender.com';
-
+//static const String baseUrl =
+//    'http://10.0.2.2:8001';
   // Endpoints de API
   static const String apiPrefix = '/api';
 
   // Auth endpoints
 
   static const String registerEndpoint = '$apiPrefix/auth/register/';
+  static const String loginEndpoint = '$apiPrefix/auth/login/';
 
   // Health check
   static const String healthEndpoint = '$apiPrefix/health/';
@@ -22,7 +24,7 @@ class AppConfig {
   // Headers con autenticación
   static Map<String, String> getAuthHeaders(String token) => {
     ...defaultHeaders,
-    'Authorization': 'Bearer $token',
+    'Authorization': 'Token $token',
   };
 
   // Timeouts

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'screens/register_screen.dart';
 import 'utils/app_routes.dart';
 
 void main() {
@@ -35,7 +34,7 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       // Sistema de rutas
-      initialRoute: AppRoutes.register,
+      initialRoute: AppRoutes.login,
       routes: AppRoutes.routes,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
