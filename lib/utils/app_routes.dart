@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/register_screen.dart';
-// import '../screens/login_screen.dart';         // Descomentar cuando exista
-// import '../screens/home_screen.dart';          // Descomentar cuando exista
+import '../screens/login_screen.dart';
+import '../screens/home_screen.dart';
 // import '../screens/profile_screen.dart';       // Descomentar cuando exista
 // import '../screens/appointments_screen.dart';  // Descomentar cuando exista
 
@@ -18,10 +18,10 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes {
     return {
       register: (context) => const RegisterScreen(),
+      login: (context) => const LoginScreen(),
+      home: (context) => const HomeScreen(),
 
       // TODO: Descomentar cuando las pantallas existan
-      // login: (context) => const LoginScreen(),
-      // home: (context) => const HomeScreen(),
       // profile: (context) => const ProfileScreen(),
       // appointments: (context) => const AppointmentsScreen(),
     };
