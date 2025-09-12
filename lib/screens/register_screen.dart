@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../config/app_config.dart';
 import '../models/register_request.dart';
 import '../services/http_service.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -432,8 +433,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             _isLoading
                                 ? null
                                 : () {
-                                  // AppRoutes.navigateToLogin(context); // Activar cuando exista LoginScreen
-                                  print('Navegando al login...');
+                                  FocusScope.of(
+                                    context,
+                                  ).unfocus(); // cierra el teclado
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginScreen(),
+                                    ),
+                                  );
                                 },
                         child: const Text(
                           'Inicia sesión',
