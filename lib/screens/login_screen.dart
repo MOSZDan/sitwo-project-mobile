@@ -1,9 +1,9 @@
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/http_service.dart';
 import '../utils/app_routes.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,13 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await _httpService.post(
-        AppConfig.loginEndpoint,
-        {
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text,
-        },
-      );
+      final response = await _httpService.post(AppConfig.loginEndpoint, {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      });
 
       if (mounted) {
         if (response.containsKey('token')) {
@@ -127,7 +124,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF06B6D4).withOpacity(0.4),
+                                  color: const Color(
+                                    0xFF06B6D4,
+                                  ).withOpacity(0.4),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -151,7 +150,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 8),
                           const Text(
                             'Ingresa a tu cuenta',
-                            style: TextStyle(color: Color(0xFF4B5563), fontSize: 16),
+                            style: TextStyle(
+                              color: Color(0xFF4B5563),
+                              fontSize: 16,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 32),
@@ -167,8 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return 'El correo es requerido';
                               }
                               if (!RegExp(
-                                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
-,
+                                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
                               ).hasMatch(value.trim())) {
                                 return 'Ingresa un correo válido';
                               }
@@ -190,8 +191,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     : Icons.visibility_outlined,
                                 color: const Color(0xFF9CA3AF),
                               ),
-                              onPressed: () =>
-                                  setState(() => _obscurePassword = !_obscurePassword),
+                              onPressed:
+                                  () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -204,14 +207,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Submit button
                           _buildGradientButton(),
-                          
+
                           const SizedBox(height: 20),
 
                           // Forgot Password
                           TextButton(
-                            onPressed: _isLoading ? null : () {
-                              // TODO: Navigate to forgot password screen
-                            },
+                            onPressed:
+                                _isLoading
+                                    ? null
+                                    : () {
+                                      FocusScope.of(
+                                        context,
+                                      ).unfocus(); // cierra teclado sin mover layout
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) =>
+                                                  const ForgotPasswordScreen(),
+                                        ),
+                                      );
+                                    },
                             child: const Text(
                               '¿Olvidaste tu contraseña?',
                               style: TextStyle(
@@ -234,13 +249,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                     fontSize: 14,
                                     color: Color(0xFF4B5563),
                                   ),
-                                  textAlign: TextAlign.right, // Align text to the right within its expanded space
+                                  textAlign:
+                                      TextAlign
+                                          .right, // Align text to the right within its expanded space
                                 ),
                               ),
                               GestureDetector(
-                                onTap: _isLoading
-                                    ? null
-                                    : () => AppRoutes.navigateToRegister(context),
+                                onTap:
+                                    _isLoading
+                                        ? null
+                                        : () => AppRoutes.navigateToRegister(
+                                          context,
+                                        ),
                                 child: const Text(
                                   'Regístrate aquí',
                                   style: TextStyle(
@@ -292,23 +312,24 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        child:
+            _isLoading
+                ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : const Text(
+                  'Iniciar Sesión',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              )
-            : const Text(
-                'Iniciar Sesión',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
       ),
     );
   }
@@ -341,12 +362,17 @@ class _LoginScreenState extends State<LoginScreen> {
           validator: validator,
           style: const TextStyle(fontSize: 16, color: Color(0xFF1F2937)),
           decoration: InputDecoration(
-            prefixIcon: prefixIcon != null
-                ? Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 12),
-                    child: Icon(prefixIcon, color: const Color(0xFF0891B2), size: 22),
-                  )
-                : null,
+            prefixIcon:
+                prefixIcon != null
+                    ? Padding(
+                      padding: const EdgeInsets.only(left: 16, right: 12),
+                      child: Icon(
+                        prefixIcon,
+                        color: const Color(0xFF0891B2),
+                        size: 22,
+                      ),
+                    )
+                    : null,
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: Colors.white.withOpacity(0.8),
@@ -364,7 +390,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFFEF4444),
+                width: 1.5,
+              ),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
