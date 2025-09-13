@@ -5,7 +5,9 @@ import '../config/app_config.dart';
 
 class HttpService {
   static final HttpService _instance = HttpService._internal();
+
   factory HttpService() => _instance;
+
   HttpService._internal();
 
   // GET request
@@ -51,6 +53,20 @@ class HttpService {
     } catch (e) {
       throw Exception('Error en POST: $e');
     }
+  }
+
+  // lib/services/http_service.dart
+
+  // lib/services/http_service.dart
+
+  Future<void> savePatientId(int patientId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('patient_id', patientId);
+  }
+
+  Future<int?> getPatientId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('patient_id');
   }
 
   // PUT request
@@ -163,5 +179,40 @@ class HttpService {
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+  }
+
+  Future<void> saveUserRole(String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_role', role);
+  }
+
+  Future<String?> getUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_role');
+  }
+
+  Future<Map<String, dynamic>> patch(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final token = await _getToken();
+      final headers =
+          token != null
+              ? AppConfig.getAuthHeaders(token)
+              : AppConfig.defaultHeaders;
+
+      final response = await http
+          .patch(
+            Uri.parse('${AppConfig.baseUrl}$endpoint'),
+            headers: headers,
+            body: json.encode(data),
+          )
+          .timeout(AppConfig.requestTimeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      throw Exception('Error en PATCH: $e');
+    }
   }
 }
