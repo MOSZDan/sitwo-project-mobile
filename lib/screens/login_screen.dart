@@ -37,7 +37,20 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         if (response.containsKey('token')) {
           await _httpService.saveToken(response['token']);
+          final patientId = response['usuario']['codigo'] as int?;
+          if (patientId != null) {
+            await _httpService.savePatientId(patientId);
+          }
+          final userRole = response['usuario']['subtipo'] as String?;
+          if (userRole != null) {
+            await _httpService.saveUserRole(userRole);
+          }
           _showMessage('¡Bienvenido!', true);
+          if (userRole == 'recepcionista') {
+            AppRoutes.navigateToReceptionistDashboard(context);
+          } else {
+            AppRoutes.navigateToHome(context);
+          }
           AppRoutes.navigateToHome(context);
         } else {
           _showMessage('Respuesta inesperada del servidor', false);

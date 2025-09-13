@@ -15,7 +15,7 @@ class CustomTextField extends StatelessWidget {
   final String? pattern;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.label,
     this.placeholder,
     this.isRequired = false,
@@ -28,7 +28,7 @@ class CustomTextField extends StatelessWidget {
     this.prefixIcon,
     this.maxLength,
     this.pattern,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

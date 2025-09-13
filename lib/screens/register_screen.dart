@@ -48,8 +48,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (email.isEmpty) return false;
     if (!RegExp(
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    ).hasMatch(email))
+    ).hasMatch(email)) {
       return false;
+    }
 
     // Validar contraseña
     if (_passwordController.text.length < 8) return false;
@@ -788,7 +789,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: DropdownButtonFormField<String>(
-            value: _sexo.isEmpty ? null : _sexo,
+            initialValue: _sexo.isEmpty ? null : _sexo,
             decoration: const InputDecoration(
               prefixIcon: Icon(
                 Icons.person_outline,
