@@ -18,6 +18,11 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Página de Inicio'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => AppRoutes.navigateToProfile(context),
+            tooltip: 'Editar Perfil',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _logout(context),
             tooltip: 'Cerrar Sesión',
