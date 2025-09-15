@@ -29,7 +29,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center( // El body ya no necesita ser 'const' para poder añadir un botón con una función
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -50,21 +50,22 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // ===== 👇 ESTE ES EL BOTÓN QUE FALTABA 👇 =====
+            // Botón principal - Programar Cita
             ElevatedButton.icon(
               icon: const Icon(Icons.calendar_today),
               label: const Text('Programar Cita'),
               onPressed: () {
-                // Navega a la pantalla para programar citas
                 AppRoutes.navigateToScheduleAppointment(context);
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                minimumSize: const Size(200, 48),
                 textStyle: const TextStyle(fontSize: 16),
               ),
             ),
 
             const SizedBox(height: 16),
+
+            // Botón secundario - Ver Mis Citas
             OutlinedButton.icon(
               icon: const Icon(Icons.list_alt_outlined),
               label: const Text('Ver Mis Citas'),
@@ -72,8 +73,25 @@ class HomeScreen extends StatelessWidget {
                 AppRoutes.navigateToMyAppointments(context);
               },
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size(200, 48), // Tamaño mínimo
+                minimumSize: const Size(200, 48),
                 textStyle: const TextStyle(fontSize: 16),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Botón secundario - Configurar Notificaciones
+            OutlinedButton.icon(
+              icon: const Icon(Icons.notifications_outlined),
+              label: const Text('Configurar Notificaciones'),
+              onPressed: () {
+                AppRoutes.navigateToNotificationSettings(context);
+              },
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(200, 48),
+                textStyle: const TextStyle(fontSize: 16),
+                side: const BorderSide(color: Color(0xFF8B5CF6)),
+                foregroundColor: const Color(0xFF8B5CF6),
               ),
             ),
           ],

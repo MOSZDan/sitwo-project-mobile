@@ -6,6 +6,7 @@ import '../screens/schedule_appointment_screen.dart';
 import '../screens/receptionist_dashboard_screen.dart';
 // import '../screens/profile_screen.dart';       // Descomentar cuando exista
 // import '../screens/appointments_screen.dart';  // Descomentar cuando exista
+import '../screens/notification_settings_screen.dart';
 import '../screens/my_appointments_screen.dart';
 import '../screens/profile_screen.dart';
 
@@ -20,7 +21,7 @@ class AppRoutes {
   static const String splash = '/splash';
   static const String scheduleAppointment = '/schedule-appointment';
   static const String receptionistDashboard = '/receptionist-dashboard';
-
+  static const String notificationSettings = '/notification-settings';
 
   // Mapa de rutas - fácil de mantener
 
@@ -32,7 +33,9 @@ class AppRoutes {
       scheduleAppointment: (context) => const ScheduleAppointmentScreen(),
       myAppointments: (context) => const MyAppointmentsScreen(),
       receptionistDashboard: (context) => const ReceptionistDashboardScreen(),
+      notificationSettings: (context) => const NotificationSettingsScreen(),
       profile: (context) => const ProfileScreen(),
+
       // TODO: Descomentar cuando las pantallas existan
       // profile: (context) => const ProfileScreen(),
       // appointments: (context) => const AppointmentsScreen(),
@@ -101,4 +104,9 @@ class AppRoutes {
     Navigator.pushReplacementNamed(context, receptionistDashboard);
   }
 
+  static void navigateToNotificationSettings(BuildContext context) {
+    Navigator.pushNamed(context, notificationSettings);
+  }
+
 }
+
