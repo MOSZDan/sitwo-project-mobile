@@ -1,7 +1,8 @@
 class AppConfig {
   // URL del backend
- // static const String baseUrl = 'https://sitwo-project-backend-vzq2.onrender.com';
-static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = //'http://192.168.0.7:8000' ;
+      'https://sitwo-project-backend-vzq2.onrender.com';
+
 
   // Endpoints de API
   static const String apiPrefix = '/api';
@@ -17,6 +18,7 @@ static const String baseUrl = 'http://127.0.0.1:8000';
   static const String horariosEndpoint = '$apiPrefix/horarios/';
   static const String tiposConsultaEndpoint = '$apiPrefix/tipos-consulta/';
   static const String consultasEndpoint = '$apiPrefix/consultas/';
+
   // Headers por defecto
   static Map<String, String> get defaultHeaders => {
     'Content-Type': 'application/json',

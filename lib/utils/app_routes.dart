@@ -8,6 +8,7 @@ import '../screens/receptionist_dashboard_screen.dart';
 // import '../screens/appointments_screen.dart';  // Descomentar cuando exista
 import '../screens/notification_settings_screen.dart';
 import '../screens/my_appointments_screen.dart';
+import '../screens/profile_screen.dart';
 
 class AppRoutes {
   // Rutas definidas como constantes
@@ -33,6 +34,8 @@ class AppRoutes {
       myAppointments: (context) => const MyAppointmentsScreen(),
       receptionistDashboard: (context) => const ReceptionistDashboardScreen(),
       notificationSettings: (context) => const NotificationSettingsScreen(),
+      profile: (context) => const ProfileScreen(),
+
       // TODO: Descomentar cuando las pantallas existan
       // profile: (context) => const ProfileScreen(),
       // appointments: (context) => const AppointmentsScreen(),
@@ -104,5 +107,6 @@ class AppRoutes {
   static void navigateToNotificationSettings(BuildContext context) {
     Navigator.pushNamed(context, notificationSettings);
   }
+
 }
 
