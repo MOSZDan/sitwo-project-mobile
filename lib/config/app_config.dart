@@ -1,7 +1,7 @@
 class AppConfig {
   // URL del backend
-  static const String baseUrl = //'http://192.168.0.7:8000' ;
-      'https://sitwo-project-backend-vzq2.onrender.com';
+  static const String baseUrl ='http://10.0.2.2:8000'; //'http://192.168.0.7:8000' ;
+     // 'https://sitwo-project-backend-vzq2.onrender.com';
 
 
   // Endpoints de API
