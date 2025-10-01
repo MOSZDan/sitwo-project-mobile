@@ -1,19 +1,27 @@
 // lib/widgets/appointment_card.dart
 
 import 'package:flutter/material.dart';
-
-import '../models/consulta.dart';
 import 'package:intl/intl.dart';
+import '../models/consulta.dart';
 
 class AppointmentCard extends StatelessWidget {
   final Consulta consulta;
+  final VoidCallback? onCancel;
+  final VoidCallback? onReschedule;
 
-  const AppointmentCard({super.key, required this.consulta});
+  const AppointmentCard({
+    super.key,
+    required this.consulta,
+    this.onCancel,
+    this.onReschedule,
+  });
 
   @override
   Widget build(BuildContext context) {
     final DateTime date = DateTime.parse(consulta.fecha);
     final String formattedDate = DateFormat.yMMMMd('es_ES').format(date);
+    // FIX: Make the check more robust by trimming whitespace and converting to lowercase
+    final bool isActionable = consulta.estadoConsulta.estado.trim().toLowerCase() == 'agendada';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -68,6 +76,25 @@ class AppointmentCard extends StatelessWidget {
                 labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
+            // FIX: Add a divider and the action buttons if the appointment is actionable
+            if (isActionable) ...[
+              const Divider(height: 20, thickness: 1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: onReschedule,
+                    child: const Text('Reprogramar'),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: onCancel,
+                    style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                    child: const Text('Cancelar'),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -100,7 +127,8 @@ class AppointmentCard extends StatelessWidget {
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
+    // FIX: Make status check more robust
+    switch (status.trim().toLowerCase()) {
       case 'agendada':
         return Colors.blueAccent;
       case 'confirmada':
