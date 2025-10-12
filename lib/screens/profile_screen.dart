@@ -16,24 +16,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _errorMessage = '';
   String? _userRole;
 
-  // --- Controladores para TODOS los campos posibles ---
-  // Comunes
-  final _nombreController = TextEditingController();
-  final _apellidoController = TextEditingController();
+  // --- Campos EDITABLES ---
+  final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
 
-  // Paciente
-  final _direccionController = TextEditingController();
-  final _fechaNacimientoController = TextEditingController();
-  final _carnetController = TextEditingController();
+  // --- Campos de SOLO LECTURA (para mostrar) ---
+  String _nombre = '';
+  String _apellido = '';
+  String _sexo = '';
+  String _codigo = '';
 
-  // Odontólogo
-  final _especialidadController = TextEditingController();
-  final _experienciaController = TextEditingController();
-  final _matriculaController = TextEditingController();
-
-  // Recepcionista
-  final _habilidadesController = TextEditingController();
+  // --- Datos del perfil específico (solo lectura) ---
+  Map<String, dynamic>? _perfilData;
 
   @override
   void initState() {
@@ -41,38 +35,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserProfile();
   }
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _telefonoController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadUserProfile() async {
-    setState(() { _isLoading = true; _errorMessage = ''; });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
       final userRole = await _httpService.getUserRole();
-      final userData = await _httpService.get('/api/auth/user/');
+      // Usar el endpoint correcto /api/usuario/me
+      final userData = await _httpService.get('/api/usuario/me');
 
       setState(() {
         _userRole = userRole;
 
-        // Cargar datos comunes
-        _nombreController.text = userData['nombre'] ?? '';
-        _apellidoController.text = userData['apellido'] ?? '';
+        // Cargar datos editables
+        _emailController.text = userData['correoelectronico'] ?? '';
         _telefonoController.text = userData['telefono'] ?? '';
 
-        final perfilData = userData['perfil'];
-        if (perfilData == null) return;
-
-        // Cargar datos específicos del rol desde el objeto 'perfil'
-        if (_userRole == 'paciente') {
-          _direccionController.text = perfilData['direccion'] ?? '';
-          _fechaNacimientoController.text = perfilData['fechanacimiento'] ?? '';
-          _carnetController.text = perfilData['carnetidentidad'] ?? '';
-        } else if (_userRole == 'odontologo') {
-          _especialidadController.text = perfilData['especialidad'] ?? '';
-          _experienciaController.text = perfilData['experienciaProfesional'] ?? '';
-          _matriculaController.text = perfilData['noMatricula'] ?? '';
-        } else if (_userRole == 'recepcionista') {
-          _habilidadesController.text = perfilData['habilidadesSoftware'] ?? '';
-        }
+        // Cargar datos de solo lectura
+        _nombre = userData['nombre'] ?? '';
+        _apellido = userData['apellido'] ?? '';
+        _sexo = userData['sexo'] ?? '';
+        _codigo = userData['codigo']?.toString() ?? '';
+        _perfilData = userData['perfil'];
       });
     } catch (e) {
-      setState(() { _errorMessage = 'Error al cargar el perfil: ${e.toString()}'; });
+      setState(() {
+        _errorMessage = 'Error al cargar el perfil: ${e.toString()}';
+      });
     } finally {
       setState(() => _isLoading = false);
     }
@@ -84,35 +82,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Prepara los datos comunes
+      // Solo enviar los campos editables: correoelectronico y telefono
       final Map<String, dynamic> updatedData = {
-        'nombre': _nombreController.text,
-        'apellido': _apellidoController.text,
-        'telefono': _telefonoController.text,
+        'correoelectronico': _emailController.text.trim().toLowerCase(),
+        'telefono': _telefonoController.text.trim(),
       };
 
-      // 2. Añade los datos específicos del rol al mismo mapa
-      if (_userRole == 'paciente') {
-        updatedData['direccion'] = _direccionController.text;
-        updatedData['fechanacimiento'] = _fechaNacimientoController.text;
-        updatedData['carnetidentidad'] = _carnetController.text;
-      } else if (_userRole == 'odontologo') {
-        updatedData['especialidad'] = _especialidadController.text;
-        updatedData['experienciaProfesional'] = _experienciaController.text;
-        updatedData['noMatricula'] = _matriculaController.text;
-      } else if (_userRole == 'recepcionista') {
-        updatedData['habilidadesSoftware'] = _habilidadesController.text;
-      }
-
-      // 3. Envía todo en una sola petición PATCH
-      await _httpService.patch('/api/auth/user/', updatedData);
+      // Enviar PATCH al endpoint correcto
+      await _httpService.patch('/api/usuario/me', updatedData);
 
       if (mounted) {
         _showMessage('Perfil actualizado con éxito', true);
-        Navigator.of(context).pop();
+        // Recargar para mostrar cambios
+        await _loadUserProfile();
       }
     } catch (e) {
-      if (mounted) { _showMessage('Error al guardar: ${e.toString()}', false); }
+      if (mounted) {
+        _showMessage('Error al guardar: ${e.toString()}', false);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -121,115 +108,309 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar Perfil')),
-      body: _isLoading && _nombreController.text.isEmpty
+      appBar: AppBar(
+        title: const Text('Mi Perfil'),
+        backgroundColor: Colors.teal,
+      ),
+      body: _isLoading && _emailController.text.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
-          ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
-          : RefreshIndicator(
-        onRefresh: _loadUserProfile,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // --- CAMPOS COMUNES PARA TODOS ---
-                _buildSectionTitle('Información General'),
-                _buildTextField(_nombreController, 'Nombre'),
-                const SizedBox(height: 16),
-                _buildTextField(_apellidoController, 'Apellido'),
-                const SizedBox(height: 16),
-                _buildTextField(_telefonoController, 'Teléfono', keyboardType: TextInputType.phone),
-
-                // --- CAMPOS ESPECÍFICOS DEL ROL ---
-                if (_userRole == 'paciente') ..._buildPacienteFields(),
-                if (_userRole == 'odontologo') ..._buildOdontologoFields(),
-                if (_userRole == 'recepcionista') ..._buildRecepcionistaFields(),
-
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(_errorMessage,
+                          style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadUserProfile,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
                   ),
-                  child: _isLoading
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Guardar Cambios'),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadUserProfile,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // --- AVATAR ---
+                          _buildAvatar(),
+                          const SizedBox(height: 24),
+
+                          // --- CAMPOS DE SOLO LECTURA ---
+                          _buildSectionTitle('Información Personal (Solo lectura)'),
+                          _buildReadOnlyField('Nombre', _nombre),
+                          const SizedBox(height: 12),
+                          _buildReadOnlyField('Apellido', _apellido),
+                          const SizedBox(height: 12),
+                          _buildReadOnlyField('Sexo', _sexo),
+                          const SizedBox(height: 12),
+                          _buildReadOnlyField(
+                              'Código de Usuario', _codigo),
+
+                          const SizedBox(height: 32),
+
+                          // --- CAMPOS EDITABLES ---
+                          _buildSectionTitle('Datos Editables'),
+                          const Text(
+                            'Solo puedes editar tu correo electrónico y número de teléfono',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildEditableEmailField(),
+                          const SizedBox(height: 16),
+                          _buildEditableTelefonoField(),
+
+                          // --- PERFIL ESPECÍFICO DEL ROL (SOLO LECTURA) ---
+                          if (_perfilData != null) ...[
+                            const SizedBox(height: 32),
+                            _buildSectionTitle('Datos del Perfil (Solo lectura)'),
+                            ..._buildPerfilFields(),
+                          ],
+
+                          const SizedBox(height: 32),
+
+                          // --- BOTÓN GUARDAR ---
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _saveProfile,
+                            style: ElevatedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: Colors.teal,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ))
+                                : const Text(
+                                    'Guardar Cambios',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.white),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ],
-            ),
+    );
+  }
+
+  // --- AVATAR ---
+  Widget _buildAvatar() {
+    return Center(
+      child: CircleAvatar(
+        radius: 60,
+        backgroundColor: Colors.teal.shade100,
+        child: Text(
+          _nombre.isNotEmpty ? _nombre[0].toUpperCase() : '?',
+          style: const TextStyle(
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            color: Colors.teal,
           ),
         ),
       ),
     );
   }
 
-  // --- Métodos para construir los campos de cada rol ---
-  List<Widget> _buildPacienteFields() {
-    return [
-      const SizedBox(height: 24),
-      _buildSectionTitle('Datos del Paciente'),
-      _buildTextField(_direccionController, 'Dirección'),
-      const SizedBox(height: 16),
-      _buildTextField(_fechaNacimientoController, 'Fecha de Nacimiento (YYYY-MM-DD)'),
-      const SizedBox(height: 16),
-      _buildTextField(_carnetController, 'Carnet de Identidad'),
-    ];
-  }
-
-  List<Widget> _buildOdontologoFields() {
-    return [
-      const SizedBox(height: 24),
-      _buildSectionTitle('Perfil Profesional'),
-      _buildTextField(_especialidadController, 'Especialidad'),
-      const SizedBox(height: 16),
-      _buildTextField(_experienciaController, 'Experiencia Profesional'),
-      const SizedBox(height: 16),
-      _buildTextField(_matriculaController, 'N° de Matrícula'),
-    ];
-  }
-
-  List<Widget> _buildRecepcionistaFields() {
-    return [
-      const SizedBox(height: 24),
-      _buildSectionTitle('Perfil Profesional'),
-      _buildTextField(_habilidadesController, 'Habilidades de Software'),
-    ];
-  }
-
-  // --- Widgets reusables ---
-  Widget _buildTextField(TextEditingController controller, String label, {TextInputType? keyboardType}) {
+  // --- CAMPO EDITABLE: EMAIL ---
+  Widget _buildEditableEmailField() {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
+      controller: _emailController,
+      keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: 'Correo Electrónico *',
+        prefixIcon: const Icon(Icons.email, color: Colors.teal),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.teal, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.teal, width: 2),
+        ),
       ),
       validator: (value) {
-        if (value == null || value.trim().isEmpty) { return 'Este campo es requerido'; }
+        if (value == null || value.trim().isEmpty) {
+          return 'El correo electrónico es requerido';
+        }
+        // Validación simple de email
+        final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+        if (!emailRegex.hasMatch(value.trim())) {
+          return 'Ingresa un correo electrónico válido';
+        }
         return null;
       },
     );
   }
 
+  // --- CAMPO EDITABLE: TELÉFONO ---
+  Widget _buildEditableTelefonoField() {
+    return TextFormField(
+      controller: _telefonoController,
+      keyboardType: TextInputType.phone,
+      maxLength: 8,
+      decoration: InputDecoration(
+        labelText: 'Teléfono *',
+        prefixIcon: const Icon(Icons.phone, color: Colors.teal),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.teal, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.teal, width: 2),
+        ),
+        helperText: 'Debe tener exactamente 8 dígitos',
+      ),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'El teléfono es requerido';
+        }
+        // Validar que sean exactamente 8 dígitos
+        if (value.trim().length != 8) {
+          return 'El teléfono debe tener exactamente 8 dígitos';
+        }
+        // Validar que solo sean números
+        if (!RegExp(r'^\d{8}$').hasMatch(value.trim())) {
+          return 'El teléfono debe contener solo números';
+        }
+        return null;
+      },
+    );
+  }
+
+  // --- CAMPO DE SOLO LECTURA ---
+  Widget _buildReadOnlyField(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value.isEmpty ? 'No especificado' : value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+        ],
+      ),
+    );
+  }
+
+  // --- PERFIL ESPECÍFICO DEL ROL ---
+  List<Widget> _buildPerfilFields() {
+    if (_perfilData == null) return [];
+
+    List<Widget> fields = [];
+
+    if (_userRole == 'paciente') {
+      fields.addAll([
+        _buildReadOnlyField(
+            'Dirección', _perfilData!['direccion'] ?? 'No especificado'),
+        const SizedBox(height: 12),
+        _buildReadOnlyField('Fecha de Nacimiento',
+            _perfilData!['fechanacimiento'] ?? 'No especificado'),
+        const SizedBox(height: 12),
+        _buildReadOnlyField('Carnet de Identidad',
+            _perfilData!['carnetidentidad'] ?? 'No especificado'),
+      ]);
+    } else if (_userRole == 'odontologo') {
+      fields.addAll([
+        _buildReadOnlyField(
+            'Especialidad', _perfilData!['especialidad'] ?? 'No especificado'),
+        const SizedBox(height: 12),
+        _buildReadOnlyField('Experiencia Profesional',
+            _perfilData!['experienciaProfesional'] ?? 'No especificado'),
+        const SizedBox(height: 12),
+        _buildReadOnlyField('N° de Matrícula',
+            _perfilData!['noMatricula'] ?? 'No especificado'),
+      ]);
+    } else if (_userRole == 'recepcionista') {
+      fields.addAll([
+        _buildReadOnlyField('Habilidades de Software',
+            _perfilData!['habilidadesSoftware'] ?? 'No especificado'),
+      ]);
+    }
+
+    return fields;
+  }
+
+  // --- TÍTULO DE SECCIÓN ---
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.teal.shade700,
+            ),
       ),
     );
   }
 
+  // --- MENSAJE ---
   void _showMessage(String message, bool isSuccess) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            Icon(
+              isSuccess ? Icons.check_circle : Icons.error,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
         backgroundColor: isSuccess ? Colors.green : Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }

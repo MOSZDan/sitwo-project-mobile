@@ -23,11 +23,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final _httpService = HttpService();
 
   // Controllers
+  final _tenantController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedTenant();
+  }
+
+  // Cargar tenant guardado si existe
+  Future<void> _loadSavedTenant() async {
+    final savedTenant = await _httpService.getTenantSubdomain();
+    if (savedTenant != null && savedTenant.isNotEmpty) {
+      setState(() {
+        _tenantController.text = savedTenant;
+      });
+    }
+  }
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
@@ -35,6 +52,12 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Guardar el tenant antes de hacer login
+      final tenantSubdomain = _tenantController.text.trim().toLowerCase();
+      if (tenantSubdomain.isNotEmpty) {
+        await _httpService.saveTenantSubdomain(tenantSubdomain);
+      }
+
       final response = await _httpService.post(AppConfig.loginEndpoint, {
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
@@ -202,6 +225,42 @@ class _LoginScreenState extends State<LoginScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 32),
+
+                          // Tenant field (Multi-tenancy)
+                          if (AppConfig.multiTenantEnabled)
+                            Column(
+                              children: [
+                                _buildTextField(
+                                  label: AppConfig.tenantInputLabel,
+                                  controller: _tenantController,
+                                  keyboardType: TextInputType.text,
+                                  prefixIcon: Icons.business_outlined,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'El código de clínica es requerido';
+                                    }
+                                    // Validar que solo contenga letras minúsculas, números y guiones
+                                    if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value.trim().toLowerCase())) {
+                                      return 'Solo letras minúsculas, números y guiones';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text(
+                                    AppConfig.tenantInputHelper,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B7280),
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
 
                           // Email field
                           _buildTextField(
@@ -456,6 +515,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    _tenantController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

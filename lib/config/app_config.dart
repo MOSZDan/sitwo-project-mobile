@@ -31,10 +31,43 @@ class AppConfig {
     'Authorization': 'Token $token',
   };
 
+  // Headers con autenticación y tenant
+  static Map<String, String> getAuthHeadersWithTenant(String token, String? tenantSubdomain) {
+    final headers = {
+      ...defaultHeaders,
+      'Authorization': 'Token $token',
+    };
+
+    // Agregar header de tenant si está disponible
+    if (tenantSubdomain != null && tenantSubdomain.isNotEmpty) {
+      headers['X-Tenant-Subdomain'] = tenantSubdomain;
+    }
+
+    return headers;
+  }
+
+  // Headers con tenant (sin autenticación)
+  static Map<String, String> getHeadersWithTenant(String? tenantSubdomain) {
+    final headers = {...defaultHeaders};
+
+    // Agregar header de tenant si está disponible
+    if (tenantSubdomain != null && tenantSubdomain.isNotEmpty) {
+      headers['X-Tenant-Subdomain'] = tenantSubdomain;
+    }
+
+    return headers;
+  }
+
   // Timeouts
   static const Duration requestTimeout = Duration(seconds: 30);
 
   // Configuración de la app
   static const String appName = 'Dental Clinic';
   static const String appVersion = '1.0.0';
+
+  // Configuración Multi-Tenant
+  static const bool multiTenantEnabled = true;
+  static const String tenantInputHint = 'Ej: norte, sur, este';
+  static const String tenantInputLabel = 'Código de Clínica';
+  static const String tenantInputHelper = 'Ingresa el código proporcionado por tu clínica';
 }

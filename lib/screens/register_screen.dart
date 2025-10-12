@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _pageController = PageController();
 
   // Controllers
+  final _tenantController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nombreController = TextEditingController();
@@ -39,6 +40,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final defaultDate = DateTime.now().subtract(const Duration(days: 365 * 18));
     _fechaNacimientoController.text =
         "${defaultDate.year}-${defaultDate.month.toString().padLeft(2, '0')}-${defaultDate.day.toString().padLeft(2, '0')}";
+    _loadSavedTenant();
+  }
+
+  // Cargar tenant guardado si existe
+  Future<void> _loadSavedTenant() async {
+    final savedTenant = await _httpService.getTenantSubdomain();
+    if (savedTenant != null && savedTenant.isNotEmpty) {
+      setState(() {
+        _tenantController.text = savedTenant;
+      });
+    }
   }
 
   // Validar página 1 antes de avanzar
@@ -75,6 +87,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Guardar el tenant antes de hacer registro
+      final tenantSubdomain = _tenantController.text.trim().toLowerCase();
+      if (tenantSubdomain.isNotEmpty) {
+        await _httpService.saveTenantSubdomain(tenantSubdomain);
+      }
+
       final request = RegisterRequest(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -518,6 +536,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           const SizedBox(height: 40),
 
+          // Tenant field (Multi-tenancy)
+          if (AppConfig.multiTenantEnabled)
+            Column(
+              children: [
+                _buildTextField(
+                  label: AppConfig.tenantInputLabel,
+                  controller: _tenantController,
+                  keyboardType: TextInputType.text,
+                  prefixIcon: Icons.business_outlined,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'El código de clínica es requerido';
+                    }
+                    // Validar que solo contenga letras minúsculas, números y guiones
+                    if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value.trim().toLowerCase())) {
+                      return 'Solo letras minúsculas, números y guiones';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    AppConfig.tenantInputHelper,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+
           // Email field
           _buildTextField(
             label: 'Correo electrónico',
@@ -910,6 +964,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _tenantController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _nombreController.dispose();
