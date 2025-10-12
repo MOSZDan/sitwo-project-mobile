@@ -1,9 +1,27 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'utils/app_routes.dart';
 import 'package:intl/date_symbol_data_local.dart';
-void main() async{
+
+// Config y rutas existentes
+import 'config/app_config.dart';
+import 'utils/app_routes.dart';
+
+// Notificaciones
+import 'services/notifications/fcm_initializer.dart';
+import 'services/auth/auth_token_provider.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es_ES', null);
+
+  // Inicializa FCM: permisos, canal, token inicial/refresh.
+  // Usamos el baseUrl centralizado en AppConfig.
+  await FcmInitializer.init(
+    baseUrl: AppConfig.baseUrl,
+    getAuthToken: AuthTokenProvider.instance.getToken,
+    appVersion: AppConfig.appVersion,
+  );
+
   runApp(const MyApp());
 }
 
@@ -17,7 +35,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan),
         useMaterial3: true,
-        // Configuración adicional de tema
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -35,7 +52,6 @@ class MyApp extends StatelessWidget {
         ),
       ),
       debugShowCheckedModeBanner: false,
-      // Sistema de rutas
       initialRoute: AppRoutes.login,
       routes: AppRoutes.routes,
       onGenerateRoute: AppRoutes.onGenerateRoute,
