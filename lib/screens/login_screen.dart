@@ -5,6 +5,12 @@ import '../services/http_service.dart';
 import '../utils/app_routes.dart';
 import 'forgot_password_screen.dart';
 
+// ======= NUEVO (imports necesarios para registrar FCM) =======
+import 'package:firebase_messaging/firebase_messaging.dart';
+import '../services/auth/auth_token_provider.dart';
+import '../services/notifications/device_registry.dart';
+// =============================================================
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -37,7 +43,15 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         if (response.containsKey('token')) {
           await _httpService.saveToken(response['token']);
-          final patientId = response['usuario']['codigo'] as int?;
+
+          // ======= NUEVO (guardar JWT global y registrar FCM) =======
+          AuthTokenProvider.instance.setToken(response['token'] as String);
+          final patientId =
+              response['usuario']['codigo']
+                  as int?; // si lo usas para otra cosa, mantenlo
+          await _registerDeviceAfterLogin();
+          // ==========================================================
+
           if (patientId != null) {
             await _httpService.savePatientId(patientId);
           }
@@ -67,6 +81,24 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  // ======= NUEVO (helper para registrar el dispositivo tras login) =======
+  Future<void> _registerDeviceAfterLogin() async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken == null || fcmToken.isEmpty) return;
+
+      await DeviceRegistry.register(
+        baseUrl: AppConfig.baseUrl,
+        getAuthToken: AuthTokenProvider.instance.getToken,
+        fcmToken: fcmToken,
+        appVersion: AppConfig.appVersion,
+      );
+    } catch (_) {
+      // logging opcional
+    }
+  }
+  // =======================================================================
 
   void _showMessage(String message, bool isSuccess) {
     ScaffoldMessenger.of(context).showSnackBar(
