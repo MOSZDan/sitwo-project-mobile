@@ -10,14 +10,25 @@ class HttpService {
 
   HttpService._internal();
 
+  // Obtener headers con tenant incluido
+  Future<Map<String, String>> _getHeaders({bool includeAuth = false}) async {
+    final tenantSubdomain = await getTenantSubdomain();
+
+    if (includeAuth) {
+      final token = await _getToken();
+      if (token != null) {
+        return AppConfig.getAuthHeadersWithTenant(token, tenantSubdomain);
+      }
+    }
+
+    return AppConfig.getHeadersWithTenant(tenantSubdomain);
+  }
+
   // GET request
   Future<Map<String, dynamic>> get(String endpoint) async {
     try {
       final token = await _getToken();
-      final headers =
-          token != null
-              ? AppConfig.getAuthHeaders(token)
-              : AppConfig.defaultHeaders;
+      final headers = await _getHeaders(includeAuth: token != null);
 
       final response = await http
           .get(Uri.parse('${AppConfig.baseUrl}$endpoint'), headers: headers)
@@ -36,10 +47,7 @@ class HttpService {
   ) async {
     try {
       final token = await _getToken();
-      final headers =
-          token != null
-              ? AppConfig.getAuthHeaders(token)
-              : AppConfig.defaultHeaders;
+      final headers = await _getHeaders(includeAuth: token != null);
 
       final response = await http
           .post(
@@ -76,10 +84,7 @@ class HttpService {
   ) async {
     try {
       final token = await _getToken();
-      final headers =
-          token != null
-              ? AppConfig.getAuthHeaders(token)
-              : AppConfig.defaultHeaders;
+      final headers = await _getHeaders(includeAuth: token != null);
 
       final response = await http
           .put(
@@ -99,10 +104,7 @@ class HttpService {
   Future<Map<String, dynamic>> delete(String endpoint) async {
     try {
       final token = await _getToken();
-      final headers =
-          token != null
-              ? AppConfig.getAuthHeaders(token)
-              : AppConfig.defaultHeaders;
+      final headers = await _getHeaders(includeAuth: token != null);
 
       final response = await http
           .delete(Uri.parse('${AppConfig.baseUrl}$endpoint'), headers: headers)
@@ -197,10 +199,7 @@ class HttpService {
   ) async {
     try {
       final token = await _getToken();
-      final headers =
-          token != null
-              ? AppConfig.getAuthHeaders(token)
-              : AppConfig.defaultHeaders;
+      final headers = await _getHeaders(includeAuth: token != null);
 
       final response = await http
           .patch(
@@ -214,5 +213,42 @@ class HttpService {
     } catch (e) {
       throw Exception('Error en PATCH: $e');
     }
+  }
+
+  // ============================================================
+  // Gestión de Multi-Tenancy
+  // ============================================================
+
+  /// Guardar el subdominio del tenant
+  Future<void> saveTenantSubdomain(String subdomain) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('tenant_subdomain', subdomain.trim().toLowerCase());
+  }
+
+  /// Obtener el subdominio del tenant
+  Future<String?> getTenantSubdomain() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('tenant_subdomain');
+  }
+
+  /// Eliminar el subdominio del tenant (logout completo)
+  Future<void> removeTenantSubdomain() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('tenant_subdomain');
+  }
+
+  /// Validar si hay un tenant configurado
+  Future<bool> hasTenant() async {
+    final tenant = await getTenantSubdomain();
+    return tenant != null && tenant.isNotEmpty;
+  }
+
+  /// Limpiar toda la sesión (token + tenant + role + patient)
+  Future<void> clearSession() async {
+    await removeToken();
+    await removeTenantSubdomain();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_role');
+    await prefs.remove('patient_id');
   }
 }
